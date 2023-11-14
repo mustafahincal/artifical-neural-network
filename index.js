@@ -1,5 +1,31 @@
+const prompt = require('prompt-sync')();
+
+class Node {
+  constructor(id, isStart = false, isEnd = false) {
+    this.value = 0;
+    this.error = 0;
+    this.id = id;
+    this.isStart = isStart;
+    this.isEnd = isEnd;
+  }
+
+  print() {
+    console.log(`Node ${this.id} value: ${this.value} error: ${this.error}`);
+  }
+}
+
+class Edge {
+  constructor(from, to) {
+    this.weight = Math.random().toFixed(3);
+    this.from = from;
+    this.to = to;
+  }
+  print() {
+    console.log(`Edge from ${this.from} to ${this.to} weight: ${this.weight}`);
+  }
+}
+
 class Network {
-  static midNodeCount = 5;
   static learningCoefficient = 0.1;
   constructor() {
     this.startNodes = [];
@@ -38,7 +64,7 @@ class Network {
     );
   }
 
-  init(startNodeCount, outputNodeCount) {
+  init(startNodeCount, outputNodeCount, midNodeCount) {
     for (let i = 0; i < startNodeCount; i++) {
       const startNode = new Node(i, true, false);
       this.addStartNode(startNode);
@@ -49,7 +75,7 @@ class Network {
       this.addOutputNode(outputNode);
     }
 
-    for (let i = 0; i < Network.midNodeCount; i++) {
+    for (let i = 0; i < midNodeCount; i++) {
       const id = Math.floor(Math.random() * 1000);
       const node = new Node(id);
       this.addMidNode(node);
@@ -66,7 +92,7 @@ class Network {
     }
   }
 
-  epok(startValues, expectedOutputs) {
+  epoch(startValues, expectedOutputs) {
     for (let i = 0; i < startValues.length; i++) {
       this.startNodes[i].value = startValues[i];
     }
@@ -85,7 +111,7 @@ class Network {
         const fromNode = this.getNode(edge.from);
         net += fromNode.value * edge.weight;
       }
-      midNode.value = 1 / (1 + Math.exp(-net));
+      midNode.value = (1 / (1 + Math.exp(-net))).toFixed(3);
     }
 
     for (let outputNode of this.outputNodes) {
@@ -95,16 +121,17 @@ class Network {
         const fromNode = this.getNode(edge.from);
         net += fromNode.value * edge.weight;
       }
-      outputNode.value = 1 / (1 + Math.exp(-net));
+      outputNode.value = (1 / (1 + Math.exp(-net))).toFixed(3);
     }
   }
 
   backward() {
     for (let i = 0; i < this.outputNodes.length; i++) {
-      this.outputNodes[i].error =
+      this.outputNodes[i].error = (
         this.outputNodes[i].value *
         (1 - this.outputNodes[i].value) *
-        (this.expectedOutputs[i] - this.outputNodes[i].value);
+        (this.expectedOutputs[i] - this.outputNodes[i].value)
+      ).toFixed(3);
     }
 
     for (let midNode of this.midNodes) {
@@ -114,7 +141,7 @@ class Network {
         const toNode = this.getNode(edge.to);
         sigma += toNode.error * edge.weight;
       }
-      midNode.error = midNode.value * (1 - midNode.value) * sigma;
+      midNode.error = (midNode.value * (1 - midNode.value) * sigma).toFixed(3);
     }
 
     // update weights
@@ -123,9 +150,10 @@ class Network {
       const toNode = this.getNode(edge.to);
 
       // old value + amount of change
-      edge.weight =
+      edge.weight = (
         Number(edge.weight) +
-        Network.learningCoefficient * toNode.error * fromNode.value;
+        Network.learningCoefficient * toNode.error * fromNode.value
+      ).toFixed(3);
     }
   }
 
@@ -148,32 +176,6 @@ class Network {
     }
 
     console.log(`Total error: ${totalError / 2}`);
-    console.log('---------------------------------');
-  }
-}
-
-class Node {
-  constructor(id, isStart = false, isEnd = false) {
-    this.value = 0;
-    this.error = 0;
-    this.id = id;
-    this.isStart = isStart;
-    this.isEnd = isEnd;
-  }
-
-  print() {
-    console.log(`Node ${this.id} value: ${this.value} error: ${this.error}`);
-  }
-}
-
-class Edge {
-  constructor(from, to) {
-    this.weight = Math.random().toFixed(3);
-    this.from = from;
-    this.to = to;
-  }
-  print() {
-    console.log(`Edge from ${this.from} to ${this.to} weight: ${this.weight}`);
   }
 }
 
@@ -192,13 +194,15 @@ const outputs = [
   [1, 1],
 ];
 
-network.init(4, 2);
-for (let i = 0; i < 100; i++) {
-  console.log(`---------EPOK - ${i + 1}----------`);
+const midNodeCount = parseInt(prompt('Enter mid node count: '));
+const epochCount = parseInt(prompt('Enter epoch count: '));
+network.init(4, 2, midNodeCount);
+for (let i = 0; i < epochCount; i++) {
+  console.log(`---------EPOCH - ${i + 1}----------`);
   for (let i = 0; i < starts.length; i++) {
     // network.init(starts, outputs)
     console.log(`---------LINE - ${i}----------`);
-    network.epok(starts[i], outputs[i]);
+    network.epoch(starts[i], outputs[i]);
   }
+  network.end();
 }
-network.end();
