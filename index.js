@@ -103,6 +103,10 @@ class Network {
     this.print();
   }
 
+  sigmoid(x) {
+    return (1 / (1 + Math.exp(-1 * x))).toFixed(3);
+  }
+
   forward() {
     for (let midNode of this.midNodes) {
       let net = 0;
@@ -111,7 +115,7 @@ class Network {
         const fromNode = this.getNode(edge.from);
         net += fromNode.value * edge.weight;
       }
-      midNode.value = (1 / (1 + Math.exp(-net))).toFixed(3);
+      midNode.value = this.sigmoid(net);
     }
 
     for (let outputNode of this.outputNodes) {
@@ -121,7 +125,7 @@ class Network {
         const fromNode = this.getNode(edge.from);
         net += fromNode.value * edge.weight;
       }
-      outputNode.value = (1 / (1 + Math.exp(-net))).toFixed(3);
+      outputNode.value = this.sigmoid(net);
     }
   }
 
@@ -200,7 +204,6 @@ network.init(4, 2, midNodeCount);
 for (let i = 0; i < epochCount; i++) {
   console.log(`---------EPOCH - ${i + 1}----------`);
   for (let i = 0; i < starts.length; i++) {
-    // network.init(starts, outputs)
     console.log(`---------LINE - ${i}----------`);
     network.epoch(starts[i], outputs[i]);
   }
